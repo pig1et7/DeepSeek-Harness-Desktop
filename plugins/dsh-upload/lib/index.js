@@ -17,7 +17,7 @@ import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { join, extname } from "node:path";
 
 export const name = "upload";
-export const inject = ["tools", "systemPrompt"];
+export const inject = ["webServer", "tools", "systemPrompt"];
 
 const MAX_UPLOAD_BYTES = 64 * 1024 * 1024; // 64 MiB per file
 const MAX_BODY_BYTES = 96 * 1024 * 1024; // base64 + json overhead
@@ -324,15 +324,11 @@ function renderEntryLine(e) {
 // ---- plugin entry ----
 
 export function apply(ctx) {
-  // HTTP upload endpoint — only in shapes that carry a webserver (web GUI).
-  const webServer = ctx.get("webServer");
-  if (webServer) {
-    ctx.effect(() => webServer.register({
-      kind: "prefixes",
-      path: "/upload",
-      handler: makeHandler(ctx),
-    }), "dsh-upload: route");
-  }
+  ctx.effect(() => ctx.webServer.register({
+    kind: "prefixes",
+    path: "/upload",
+    handler: makeHandler(ctx),
+  }), "dsh-upload: route");
 
   ctx.tools.register(defineTool({
     name: "uploaded_files",
