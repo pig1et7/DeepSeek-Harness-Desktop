@@ -136,6 +136,26 @@ npm run dist     # 打包：生成 dist\DeepSeek-Harness-Desktop-1.0.0-portable.
 4. PATH 上的 `dsh`
 5. 兜底：`npx --yes @deepseek-ai/dsh web --port <n>`
 
+## 文件上传插件（plugins/dsh-upload）
+
+仓库里附带一个 **文件上传插件**：在 Web GUI 输入框左侧增加 📎 上传按钮，
+可上传图片 / Word / PDF / 文本等文件，Agent 可通过 `uploaded_files` 和
+`read_uploaded_file` 工具读取（docx/pdf 自动提取文本）。
+
+安装（在 web profile 里）：
+
+```powershell
+cd $env:DSH_HOME\profiles\web
+pnpm add D:\path\to\plugins\dsh-upload
+# 然后在 cordis.patch.yml 追加：
+#   - insert:
+#       - id: upload
+#         name: 'dsh-upload'
+# 最后重启 dsh web
+```
+
+详见 `plugins/dsh-upload/README.md`。
+
 ## 开发/验证
 
 ```powershell

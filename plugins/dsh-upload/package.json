@@ -1,0 +1,33 @@
+{
+  "name": "dsh-upload",
+  "description": "File upload plugin for the DeepSeek Harness Web GUI: upload images, Word, PDF and other files from the composer, and let the agent read them via tools.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-home-paths": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "fflate": "^0.8.2",
+    "pdfjs-dist": "^4.10.38"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  }
+}
