@@ -20,7 +20,8 @@
   - 文件以内容寻址（sha256）存储于 `$DSH_HOME/uploads/`，同名自动去重
   - 上传 API：`POST /upload`（JSON+base64）、`GET /upload`（列表）
   - **一键安装脚本** `scripts/install-upload-plugin.ps1`：在任意主机上自动
-    完成「复制插件 → 安装依赖 → 接入 profile → 写入配置」，幂等可重复执行
+    完成「复制插件 → 安装依赖 → 接入 profile → 写入配置」，幂等可重复执行，
+    pnpm 缺失时自动回退 npm；README 新增「在新主机上完整部署」指南
 - 桌面应用支持从 `%APPDATA%\DeepSeek Harness Desktop\config.json` 读取配置
   （portable 模式下比 exe 同目录更可靠）
 - 配置解析容忍 UTF-8 BOM（防止 PowerShell 写入的 BOM 导致 JSON 解析失败）

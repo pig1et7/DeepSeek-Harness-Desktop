@@ -195,6 +195,50 @@ powershell -ExecutionPolicy Bypass -File scripts\install-upload-plugin.ps1
 
 详见 `plugins/dsh-upload/README.md`。
 
+## 在新主机上完整部署（桌面应用 + 上传插件）
+
+### 方式 A：便携版 exe（最快，推荐）
+
+1. **安装 Node.js LTS**：到 [nodejs.org](https://nodejs.org) 下载安装
+   （桌面应用启动 dsh 服务需要 node）
+2. **获取桌面应用**：把 `DeepSeek-Harness-Desktop-1.0.3-portable.exe` 复制到
+   新主机（或从 GitHub Releases 下载）
+3. **首次运行**：双击 exe → 自动联网下载 dsh、初始化 profile → 关闭窗口
+   （首次较慢，之后秒开）
+4. **安装上传插件**：
+   ```powershell
+   git clone https://github.com/pig1et7/DeepSeek-Harness-Desktop
+   cd DeepSeek-Harness-Desktop
+   powershell -ExecutionPolicy Bypass -File scripts\install-upload-plugin.ps1
+   ```
+   脚本自动完成：复制插件到 `$DSH_HOME\plugins\dsh-upload` → 安装依赖 →
+   写入 profile 配置；没有 pnpm 时自动回退 npm。
+5. **重新双击 exe** → 输入框左侧出现 📎，即可上传文件
+
+### 方式 B：源码构建（开发/自定义时）
+
+```powershell
+git clone https://github.com/pig1et7/DeepSeek-Harness-Desktop
+cd DeepSeek-Harness-Desktop
+npm install              # 安装 electron + electron-builder
+npm run dist             # 生成 portable exe（dist 目录）
+```
+之后回到方式 A 的第 3–5 步。非管理员账户打包报「Cannot create symbolic
+link」时，先运行 `scripts\install-7za-wrapper.ps1`（见「重新打包的注意事项」）。
+
+### 插件装到哪个 profile？
+
+桌面应用启动的 dsh 服务使用 `$DSH_HOME`（默认 `~\.dsh`，Windows 即
+`C:\Users\<你>\.dsh`）下的 **web profile**。安装脚本会自动定位
+`$env:DSH_HOME\profiles\web`（未设置 DSH_HOME 时用 `~\.dsh\profiles\web`）。
+
+### 注意事项
+
+- 首次运行必须联网：桌面应用通过 npx 下载 dsh；插件通过 npm 下载依赖
+  （fflate / pdfjs-dist / @deepseek-ai/*）
+- npm 下载慢时，先执行 `npm config set registry https://registry.npmmirror.com`
+- dsh 版本与插件依赖的匹配说明见 `plugins/dsh-upload/README.md`
+
 ## 开发/验证
 
 ```powershell

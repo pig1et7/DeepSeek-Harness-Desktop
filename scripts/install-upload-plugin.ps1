@@ -1,4 +1,4 @@
-﻿<#
+<#
   install-upload-plugin.ps1 — 在任意一台主机上安装 dsh-upload 插件（一键）。
 
   用法（在仓库的 scripts 目录下，或指定 -PluginSrc）：
@@ -58,9 +58,15 @@ npm install --no-audit --no-fund | Out-Host
 Pop-Location
 Write-Host "[4/5] 插件依赖安装完成"
 
-# 5. pnpm add 到 profile（link 模式）
+# 5. 安装到 profile（优先 pnpm，缺失时回退 npm）
+$usePnpm = $null -ne (Get-Command pnpm -ErrorAction SilentlyContinue)
 Push-Location $ProfileDir
-pnpm add $dest | Out-Host
+if ($usePnpm) {
+  pnpm add $dest | Out-Host
+} else {
+  Write-Host "（未检测到 pnpm，使用 npm 安装）"
+  npm install --no-audit --no-fund $dest | Out-Host
+}
 Pop-Location
 Write-Host "[5/5] 已安装到 profile"
 
