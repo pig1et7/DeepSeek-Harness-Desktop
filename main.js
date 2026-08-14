@@ -48,7 +48,9 @@ function loadConfig() {
   for (const p of candidates) {
     try {
       if (fs.existsSync(p)) {
-        const parsed = JSON.parse(fs.readFileSync(p, "utf8"));
+        // strip a UTF-8 BOM if present (PS 5.1 Set-Content -Encoding UTF8 writes one)
+        const raw = fs.readFileSync(p, "utf8").replace(/^\uFEFF/, "");
+        const parsed = JSON.parse(raw);
         if (parsed && typeof parsed === "object") return parsed;
       }
     } catch (err) {
