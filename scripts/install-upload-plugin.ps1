@@ -1,4 +1,4 @@
-<#
+﻿<#
   install-upload-plugin.ps1 — 在任意一台主机上安装 dsh-upload 插件（一键）。
 
   用法（在仓库的 scripts 目录下，或指定 -PluginSrc）：

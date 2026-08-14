@@ -197,7 +197,32 @@ powershell -ExecutionPolicy Bypass -File scripts\install-upload-plugin.ps1
 
 ## 在新主机上完整部署（桌面应用 + 上传插件）
 
-### 方式 A：便携版 exe（最快，推荐）
+### 🚀 一键自动化安装（推荐）
+
+运行一次 `scripts\setup-desktop.ps1` 自动完成全套流程：
+
+```powershell
+# 1. 在目标主机获取仓库（已 clone 则跳过）
+git clone https://github.com/pig1et7/DeepSeek-Harness-Desktop
+cd DeepSeek-Harness-Desktop
+
+# 2. 一键安装：检查 Node.js → 准备 exe → 初始化 DSH → 装插件 → 建快捷方式
+#    有 portable exe 时（最快）：
+powershell -ExecutionPolicy Bypass -File scripts\setup-desktop.ps1 -ExePath D:\downloads\DeepSeek-Harness-Desktop-1.0.3-portable.exe
+#    或从源码自动构建（首次需下载 Electron，较慢）：
+powershell -ExecutionPolicy Bypass -File scripts\setup-desktop.ps1 -Build
+```
+
+脚本会自动：
+1. 检查 Node.js（缺失时尝试用 winget 自动安装）
+2. 复制 exe 到 `%USERPROFILE%\DeepSeek-Harness-Desktop\`
+3. 初始化 DSH web profile（优先用 npx 缓存的 dsh，无则联网下载）
+4. 安装上传插件（复用 install-upload-plugin.ps1）
+5. 创建桌面快捷方式
+
+完成后**双击桌面「DeepSeek Harness Desktop」**即可，输入框左侧出现 📎。
+
+### 方式 A：便携版 exe（手动，最快）
 
 1. **安装 Node.js LTS**：到 [nodejs.org](https://nodejs.org) 下载安装
    （桌面应用启动 dsh 服务需要 node）

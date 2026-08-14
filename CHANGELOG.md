@@ -22,6 +22,9 @@
   - **一键安装脚本** `scripts/install-upload-plugin.ps1`：在任意主机上自动
     完成「复制插件 → 安装依赖 → 接入 profile → 写入配置」，幂等可重复执行，
     pnpm 缺失时自动回退 npm；README 新增「在新主机上完整部署」指南
+  - **全自动部署脚本** `scripts/setup-desktop.ps1`：一条命令完成「检查
+    Node.js（可 winget 自动安装）→ 准备/构建桌面应用 exe → 初始化 DSH →
+    安装上传插件 → 创建桌面快捷方式」全套流程，适配全新主机
 - 桌面应用支持从 `%APPDATA%\DeepSeek Harness Desktop\config.json` 读取配置
   （portable 模式下比 exe 同目录更可靠）
 - 配置解析容忍 UTF-8 BOM（防止 PowerShell 写入的 BOM 导致 JSON 解析失败）
