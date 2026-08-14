@@ -1,7 +1,7 @@
 {
   "name": "dsh-desktop",
   "productName": "DeepSeek Harness Desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Desktop wrapper for the DeepSeek Harness Web GUI: double-click to start the dsh web server and open it in a native window.",
   "main": "main.js",
   "author": "dsh-desktop",

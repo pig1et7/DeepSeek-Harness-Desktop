@@ -3,6 +3,9 @@
 把 DeepSeek Harness 的 Web GUI（`dsh web`）打包成 Windows 桌面应用：
 **双击即用**，无需在终端输入 `npx @deepseek-ai/dsh web`。
 
+> **当前版本：1.0.3** —— 新增文件上传插件（📎 上传图片/Word/PDF，Agent 可读取）。
+> 完整版本历史见 [CHANGELOG.md](CHANGELOG.md)。
+
 ## 特性
 
 - 🚀 双击启动：自动查找/启动 `dsh web` 服务，并在原生窗口打开界面
@@ -13,6 +16,19 @@
 - 📄 服务日志写入 `%APPDATA%\DeepSeek Harness Desktop\logs\server.log`
 - 🔍 启动失败时给出错误页 + 日志 + 重试按钮
 - 📦 可打包为免安装的单文件 portable exe
+- 📎 **文件上传插件**（1.0.3 新增）：输入框左侧上传图片 / Word / PDF / 文本，
+  Agent 通过 `uploaded_files` / `read_uploaded_file` 工具读取内容（见下文专章）
+
+## 版本日志
+
+| 版本 | 说明 |
+| --- | --- |
+| 1.0.3 | 文件上传插件（📎 上传 + docx/pdf 文本提取 + Agent 工具 + 一键安装脚本） |
+| 1.0.2 | 图标更新（DeepSeek 卡通娘 v2） |
+| 1.0.1 | 图标更新（DeepSeek 卡通娘） |
+| 1.0.0 | 初始版本：桌面套壳应用 |
+
+详细变更见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 工作原理
 
