@@ -3,3 +3,6 @@ dist/
 smoke.png
 config.json
 *.log
+
+*.pid
+*.log.*
