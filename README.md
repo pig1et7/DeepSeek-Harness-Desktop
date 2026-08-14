@@ -109,7 +109,14 @@ npm run dist     # 打包：生成 dist\DeepSeek-Harness-Desktop-1.0.0-portable.
 
 ## 配置（可选）
 
-在 exe（或项目）同目录放一个 `config.json`（参照 `config.example.json`）：
+在以下任一位置放一个 `config.json`（两个位置同时存在时优先 exe 同目录）：
+
+- 便携版：exe 同目录（`PORTABLE_EXECUTABLE_DIR`）；如果该目录读取失败
+  （部分系统上 portable 环境变量未注入），改放
+  `%APPDATA%\DeepSeek Harness Desktop\config.json`（推荐，路径固定）
+- 开发模式：项目根目录
+
+参照 `config.example.json`：
 
 ```json
 {
