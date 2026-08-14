@@ -161,6 +161,22 @@ pnpm add D:\path\to\plugins\dsh-upload
 # 最后重启 dsh web
 ```
 
+**在另一台主机上安装**（推荐，一键脚本）：
+
+```powershell
+# 1. 先在有 DSH 的主机上 clone 本仓库（或用 git sparse 只取 plugins\dsh-upload）
+git clone https://github.com/pig1et7/DeepSeek-Harness-Desktop
+cd DeepSeek-Harness-Desktop
+
+# 2. 一键安装（自动复制插件、装依赖、写入 profile 配置）
+powershell -ExecutionPolicy Bypass -File scripts\install-upload-plugin.ps1
+
+# 3. 重启 dsh web 即可
+```
+
+脚本会把插件复制到 `$DSH_HOME\plugins\dsh-upload`（稳定位置，不依赖仓库路径），
+幂等可重复执行。手动安装见 `plugins/dsh-upload/README.md`。
+
 详见 `plugins/dsh-upload/README.md`。
 
 ## 开发/验证
