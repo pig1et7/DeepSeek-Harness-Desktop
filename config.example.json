@@ -1,0 +1,9 @@
+{
+  "_comment": "DeepSeek Harness Desktop 配置。复制为 config.json 后按需修改（放在 exe 同目录即可生效）。",
+  "port": 3080,
+  "workspaceDir": "",
+  "dshBin": "",
+  "nodeBin": "",
+  "npmCache": "",
+  "npxBin": ""
+}

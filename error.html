@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline';" />
+<title>DeepSeek Harness — 启动失败</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(1200px 600px at 50% -10%, #2b1a22 0%, #0a0e1a 55%);
+    color: #dbe4f5;
+    font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  .box { max-width: 640px; padding: 40px; text-align: center; }
+  .icon { font-size: 44px; margin-bottom: 14px; }
+  h1 { font-size: 19px; font-weight: 600; margin-bottom: 12px; color: #ffb4b4; }
+  p.msg { font-size: 13px; color: #c9d4ea; margin-bottom: 18px; line-height: 1.7; }
+  pre.log {
+    text-align: left; font-size: 11px; color: #93a5c8; background: #101626;
+    border: 1px solid #232c44; border-radius: 8px; padding: 12px; margin-bottom: 22px;
+    max-height: 220px; overflow: auto; white-space: pre-wrap; word-break: break-all;
+  }
+  button {
+    background: #2f6bff; color: #fff; border: 0; border-radius: 8px;
+    padding: 10px 22px; font-size: 14px; cursor: pointer; margin: 0 6px;
+  }
+  button:hover { background: #4a7fff; }
+  button.ghost { background: transparent; border: 1px solid #3a4764; color: #b9c8e8; }
+  button.ghost:hover { background: #141b2e; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="icon">⚠️</div>
+    <h1>DeepSeek Harness 启动失败</h1>
+    <p class="msg" id="message">无法启动本地服务。</p>
+    <pre class="log" id="log">（暂无日志）</pre>
+    <div>
+      <button id="retry">重试</button>
+      <button id="browser" class="ghost">在系统浏览器中打开</button>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const msg = params.get("message");
+    if (msg) document.getElementById("message").textContent = decodeURIComponent(msg);
+    if (window.dshDesktop) {
+      window.dshDesktop.serverInfo().then((info) => {
+        if (info && info.logTail && info.logTail.length) {
+          document.getElementById("log").textContent = info.logTail.slice(-30).join("\n");
+        }
+      }).catch(() => {});
+      document.getElementById("retry").addEventListener("click", () => window.dshDesktop.retry());
+      document.getElementById("browser").addEventListener("click", () => {
+        window.dshDesktop.serverInfo().then((info) => {
+          window.dshDesktop.openExternal(info && info.url ? info.url : "http://127.0.0.1:3080");
+        });
+      });
+    }
+  </script>
+</body>
+</html>

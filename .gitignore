@@ -1,0 +1,5 @@
+node_modules/
+dist/
+smoke.png
+config.json
+*.log

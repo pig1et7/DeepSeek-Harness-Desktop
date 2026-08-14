@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:;" />
+<title>DeepSeek Harness — 启动中</title>
+<style>
+  :root { color-scheme: dark; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(1200px 600px at 50% -10%, #16233f 0%, #0a0e1a 55%);
+    color: #dbe4f5;
+    font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    user-select: none;
+  }
+  .box { text-align: center; }
+  .ring {
+    width: 56px; height: 56px; margin: 0 auto 22px;
+    border: 4px solid rgba(120, 160, 255, 0.18);
+    border-top-color: #4d8dff;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  p { font-size: 13px; color: #8fa1c4; }
+  .log { margin-top: 18px; font-size: 11px; color: #5d6f92; max-width: 480px; white-space: pre-wrap; word-break: break-all; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="ring"></div>
+    <h1>正在启动 DeepSeek Harness</h1>
+    <p>正在启动本地服务并连接界面…</p>
+    <div class="log" id="log"></div>
+  </div>
+  <script>
+    if (window.dshDesktop) {
+      window.dshDesktop.serverInfo().then((info) => {
+        const el = document.getElementById("log");
+        if (el && info && info.logTail && info.logTail.length) {
+          el.textContent = info.logTail.slice(-6).join("\n");
+        }
+      }).catch(() => {});
+    }
+  </script>
+</body>
+</html>
