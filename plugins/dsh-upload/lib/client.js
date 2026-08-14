@@ -66,9 +66,16 @@ window.__ModuleLoader__.load({
       var useInput = props.useInput;
       var inputActions = props.inputActions;
       var inputRef = useRef(null);
+      var timerRef = useRef(null);
       var [busy, setBusy] = useState(false);
       var [error, setError] = useState(null);
       var [done, setDone] = useState(null);
+
+      var flashHint = useCallback(function (setter, text) {
+        setter(text);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(function () { setter(null); }, 2500);
+      }, []);
 
       var draft = useInput ? useInput(function (s) { return s ? s.text || "" : ""; }) : "";
       var draftRef = useRef(draft);
@@ -77,6 +84,7 @@ window.__ModuleLoader__.load({
       var onFiles = useCallback(function (fileList) {
         var files = Array.prototype.slice.call(fileList || []);
         if (files.length === 0) return;
+        if (timerRef.current) clearTimeout(timerRef.current);
         setError(null);
         setDone(null);
         setBusy(true);
@@ -103,11 +111,11 @@ window.__ModuleLoader__.load({
             }).join("\n");
             var cur = draftRef.current || "";
             inputActions.setDraft(cur ? cur + "\n" + marks : marks);
-            setDone(uploaded.map(function (r) { return r.name; }).join(", "));
+            flashHint(setDone, uploaded.map(function (r) { return r.name; }).join(", "));
           }
-          if (failed) setError(failed);
+          if (failed) flashHint(setError, failed);
         });
-      }, [inputActions]);
+      }, [inputActions, flashHint]);
 
       var onPick = useCallback(function (ev) {
         onFiles(ev.target.files);
@@ -148,12 +156,12 @@ window.__ModuleLoader__.load({
           }),
           error ? jsx("span", {
             "data-upload-error": "",
-            style: { position: "absolute", bottom: 30, right: 0, background: "var(--dsw-specific-input-major, #1a2236)", border: "1px solid var(--dsw-alias-border-l2-darkmode-thin, #2a3550)", borderRadius: 8, padding: "4px 8px", fontSize: 12, color: "var(--dsw-alias-state-error-primary, #ff7a7a)", whiteSpace: "nowrap", zIndex: 30 },
+            style: { position: "absolute", top: "calc(100% + 6px)", right: 0, background: "var(--dsw-specific-input-major, #1a2236)", border: "1px solid var(--dsw-alias-border-l2-darkmode-thin, #2a3550)", borderRadius: 8, padding: "4px 8px", fontSize: 12, color: "var(--dsw-alias-state-error-primary, #ff7a7a)", whiteSpace: "nowrap", zIndex: 30 },
             children: error,
           }) : null,
           done ? jsx("span", {
             "data-upload-done": "",
-            style: { position: "absolute", bottom: 30, right: 0, background: "var(--dsw-specific-input-major, #1a2236)", border: "1px solid var(--dsw-alias-border-l2-darkmode-thin, #2a3550)", borderRadius: 8, padding: "4px 8px", fontSize: 12, color: "var(--dsw-alias-state-success-primary, #7ad9a0)", whiteSpace: "nowrap", zIndex: 30 },
+            style: { position: "absolute", top: "calc(100% + 6px)", right: 0, background: "var(--dsw-specific-input-major, #1a2236)", border: "1px solid var(--dsw-alias-border-l2-darkmode-thin, #2a3550)", borderRadius: 8, padding: "4px 8px", fontSize: 12, color: "var(--dsw-alias-state-success-primary, #7ad9a0)", whiteSpace: "nowrap", zIndex: 30 },
             children: "已上传: " + done,
           }) : null,
         ],
