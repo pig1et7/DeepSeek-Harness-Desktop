@@ -2,15 +2,15 @@
 
 把 DeepSeek Harness 的 Web GUI 变成 **Windows 桌面应用**：双击图标即用，无需在终端输入任何命令。
 
-> 当前版本 **1.0.3** · 更新日志见 [CHANGELOG.md](CHANGELOG.md)
+> 当前版本 **1.0.4** · 更新日志见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
 ## 🚀 快速开始
 
-1. 下载 **DeepSeek-Harness-Desktop-1.0.3-portable.exe**（[GitHub Releases](https://github.com/pig1et7/DeepSeek-Harness-Desktop/releases)，约 71MB，免安装）
+1. 下载 **DeepSeek-Harness-Desktop-1.0.4-portable.exe**（[GitHub Releases](https://github.com/pig1et7/DeepSeek-Harness-Desktop/releases)，约 80MB，免安装）
 2. 安装 [Node.js LTS](https://nodejs.org)（应用启动 dsh 服务需要）
-3. **双击 exe** → 自动启动服务并打开界面，开始使用 ✅
+3. **双击 exe** → 自动启动服务并打开界面，**上传插件已内置，开箱即用** ✅
 
 > 首次运行会自动联网下载 dsh（约 1-3 分钟），之后秒开。
 > 想要桌面快捷方式？运行 `scripts\创建桌面快捷方式.cmd`。
@@ -23,19 +23,16 @@
 - 📎 **文件上传**：内置上传插件，图片 / Word / PDF / 文本都能传，Agent 自动读取
 - 📄 **出错可查**：启动失败显示错误页 + 日志 + 一键重试
 
-## 📎 文件上传（内置插件）
+## 📎 文件上传（已内置，开箱即用）
 
-输入框左侧的 **📎** 按钮可上传文件：
+exe 已包含上传插件，首次双击启动时会**自动安装**到 DSH 配置里。输入框左侧的 **📎** 按钮可上传文件：
 
 - 上传后输入框自动出现 `[上传附件: 名称 (id: sha256:...)]`
 - 发送消息，Agent 会自动找到并读取文件（**docx / pdf 自动提取文本**）
 - 文件以 sha256 储存于 `$DSH_HOME\uploads\`，同名自动去重，单文件上限 64MB
 
-安装到其他主机的 dsh（已有 DSH 服务时）：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\install-upload-plugin.ps1
-```
+> 如果给已有的 DSH 服务（非本应用启动）安装插件，运行
+> `scripts\install-upload-plugin.ps1` 即可。
 
 ## 🛠️ 在新主机上完整部署（桌面应用 + 插件，一键）
 

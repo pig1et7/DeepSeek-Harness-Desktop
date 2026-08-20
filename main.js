@@ -263,6 +263,97 @@ function onServerExited(code, signal) {
  *  - scan ports from the base; reuse an already-serving DSH instance,
  *  - else spawn our own server on the first free port and wait for boot.
  */
+
+function dshHomeDir() {
+  return process.env.DSH_HOME || path.join(os.homedir(), ".dsh");
+}
+
+/**
+ * Auto-install the bundled dsh-upload plugin into the DSH web profile, so an
+ * "open the box" user gets the 📎 upload feature without extra scripts.
+ * - source: packaged resources/dsh-upload (with deps) or repo plugins/ dir
+ * - copies to $DSH_HOME/plugins/dsh-upload, appends the profile patch entry,
+ *   and links profile/node_modules/dsh-upload so the Loader can resolve it.
+ * Idempotent: existing installs are left untouched.
+ */
+function autoInstallUploadPlugin() {
+  try {
+    const home = dshHomeDir();
+    const pkgSrc = app.isPackaged
+      ? path.join(process.resourcesPath, "dsh-upload")
+      : path.join(__dirname, "plugins", "dsh-upload");
+    if (!fs.existsSync(path.join(pkgSrc, "lib", "index.js"))) {
+      appendLog(`upload plugin bundle not found at ${pkgSrc} — skipping auto-install`);
+      return;
+    }
+
+    const pluginDest = path.join(home, "plugins", "dsh-upload");
+    if (!fs.existsSync(path.join(pluginDest, "lib", "index.js"))) {
+      fs.mkdirSync(path.dirname(pluginDest), { recursive: true });
+      fs.cpSync(pkgSrc, pluginDest, { recursive: true, force: true });
+      appendLog(`bundle installed upload plugin -> ${pluginDest}`);
+    }
+
+    const profileDir = path.join(home, "profiles", "web");
+    // initProfile is idempotent (never overwrites existing files): create the
+    // profile skeleton the same way dsh does, so a brand-new machine has a
+    // valid web profile before we inject the plugin entry.
+    fs.mkdirSync(profileDir, { recursive: true });
+    const manifestPath = path.join(profileDir, "package.json");
+    if (!fs.existsSync(manifestPath)) {
+      fs.writeFileSync(
+        manifestPath,
+        JSON.stringify({
+          name: "dsh-profile-web",
+          private: true,
+          dependencies: {},
+          dsh: { profile: { bundles: ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-web-app"] } },
+        }, null, 2) + "\n"
+      );
+    }
+    const pnpmWs = path.join(profileDir, "pnpm-workspace.yaml");
+    if (!fs.existsSync(pnpmWs)) {
+      fs.writeFileSync(pnpmWs, "packages:\n  - .\n\nnodeLinker: hoisted\nautoInstallPeers: false\n");
+    }
+
+    const patch = path.join(profileDir, "cordis.patch.yml");
+    const PATCH_HEADER = "# Your patch layer for this dsh profile, applied after every bundle layer.\n";
+    const UPLOAD_ENTRY = "- insert:\n    - id: upload\n      name: 'dsh-upload'\n";
+    if (!fs.existsSync(patch)) fs.writeFileSync(patch, PATCH_HEADER);
+    const patchText = fs.readFileSync(patch, "utf8");
+    if (!patchText.includes("dsh-upload")) {
+      // dsh's empty template is flow-style `[]`, which cannot be merged with a
+      // block `- insert:` entry. If the file only contains that empty list, we
+      // rewrite it; otherwise we append the entry.
+      const bare = patchText
+        .split("\n")
+        .filter((l) => l.trim() !== "" && !l.trim().startsWith("#"))
+        .join("\n")
+        .trim();
+      if (bare === "[]") {
+        fs.writeFileSync(patch, PATCH_HEADER + UPLOAD_ENTRY);
+      } else {
+        fs.appendFileSync(patch, "\n" + UPLOAD_ENTRY);
+      }
+      appendLog("added dsh-upload entry to web profile patch");
+    }
+
+    const nmDir = path.join(profileDir, "node_modules");
+    const nmLink = path.join(nmDir, "dsh-upload");
+    if (!fs.existsSync(nmLink)) {
+      fs.mkdirSync(nmDir, { recursive: true });
+      try {
+        fs.symlinkSync(pluginDest, nmLink, "junction");
+        appendLog(`linked ${nmLink} -> ${pluginDest}`);
+      } catch (err) {
+        appendLog(`could not link profile dsh-upload: ${err.message}`);
+      }
+    }
+  } catch (err) {
+    appendLog(`upload plugin auto-install skipped: ${err.message}`);
+  }
+}
+
 async function ensureServer() {
   const basePort = Number(config.port) || DEFAULT_PORT;
   const maxPort = basePort + PORT_TRIES;
@@ -417,6 +508,7 @@ async function runServerAndLoad() {
   }
   try {
     if (smokePort) config.port = smokePort; // smoke-mode override
+    autoInstallUploadPlugin(); // ensure the bundled upload plugin is present before boot
     await ensureServer();
     if (win && !win.isDestroyed()) {
       await win.loadURL(serverUrl());

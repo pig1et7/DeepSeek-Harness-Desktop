@@ -3,6 +3,13 @@
 本项目版本历史。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.0.4] - 2026-08-20
+
+### 新增
+
+- **exe 开箱即用**：上传插件（dsh-upload）已随发布包内置，双击启动时自动
+  安装到 DSH web profile（含依赖与配置），无需再运行任何安装脚本
+
 ## [1.0.3] - 2026-08-14
 
 ### 新增
