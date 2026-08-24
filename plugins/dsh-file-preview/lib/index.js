@@ -14,7 +14,9 @@
  * already passed the filesystem sandbox.
  */
 
-import { mkdir } from "node:fs/promises";
+import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { join } from "node:path";
+import { resolveDshHome } from "@deepseek-ai/dsh-home-paths";
 
 export const name = "file-preview";
 export const inject = ["webServer"];
@@ -22,6 +24,38 @@ export const inject = ["webServer"];
 const MAX_RECENT = 80; // ring buffer size
 const MAX_TEXT = 120 * 1024; // content preview cap (chars)
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
+
+// Persistence: the recent-file ring survives restarts via DSH_HOME.
+async function recentFile() {
+  return join(resolveDshHome(), "plugins", "file-preview-recent.json");
+}
+let saveTimer = null;
+
+async function loadRecent() {
+  try {
+    const raw = await readFile(await recentFile(), "utf8");
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      for (const e of parsed) {
+        if (e && typeof e.path === "string") recent.set(e.path, e);
+      }
+    }
+  } catch {
+    /* no prior state */
+  }
+}
+
+function scheduleSave() {
+  // short debounce (500ms) so bursts of edits write once; a killed process
+  // right after the last edit can still lose a tail record, so keep it tight.
+  if (saveTimer !== null) return;
+  saveTimer = setTimeout(() => {
+    saveTimer = null;
+    recentFile()
+      .then((path) => writeFile(path, JSON.stringify(Array.from(recent.values())), "utf8"))
+      .catch((err) => console.error("[file-preview] persist recent failed:", err.message));
+  }, 500);
+}
 
 const TEXT_EXTS = new Set([
   ".txt", ".md", ".markdown", ".json", ".jsonc", ".csv", ".tsv", ".log",
@@ -52,19 +86,43 @@ function countDiffLines(diffs) {
   return { plus, minus };
 }
 
-function extractDiffData(result) {
+/**
+ * Build a synthetic single-hunk diff for replace-style edits (str_replace
+ * passes old_string/new_string in the args) and whole-file writes where the
+ * old content is unavailable.
+ */
+function syntheticDiff(args) {
+  const oldStr = typeof args.old_string === "string" ? args.old_string : null;
+  const newStr = typeof args.new_string === "string" ? args.new_string
+    : typeof args.content === "string" ? args.content : null;
+  if (oldStr === null || newStr === null) return null;
+  const split = (s) => (s === "" ? [""] : s.replace(/\r\n/g, "\n").split("\n"));
+  const oldLines = split(oldStr);
+  const newLines = split(newStr);
+  // make the hunk readable: pad the shorter side so +/- pairs align per row
+  const max = Math.max(oldLines.length, newLines.length);
+  while (oldLines.length < max) oldLines.push("");
+  while (newLines.length < max) newLines.push("");
+  return [{ oldLines, newLines, title: "replace" }];
+}
+
+function extractDiffData(result, args) {
   // result shape is defensive: official tools carry a `card:"diff"` result
-  // view with { diffs, locations }; older shapes put paths in the args.
+  // view with { diffs, locations }; str_replace_editor presents a generic
+  // `kind:"edit"` card (locations only), and unknown shapes fall back to args.
   const value = result && typeof result === "object" ? result.value ?? result : null;
-  if (!value || typeof value !== "object") return { diffs: null, paths: [] };
-  const view = value.resultView ?? null;
-  const diffs = view && Array.isArray(view.diffs) ? view.diffs : null;
+  const view = value && typeof value === "object" ? value.resultView ?? null : null;
+  let diffs = view && Array.isArray(view.diffs) ? view.diffs : null;
   const paths = [];
   if (view && Array.isArray(view.locations)) {
     for (const loc of view.locations) {
       if (loc && typeof loc.path === "string") paths.push(loc.path);
     }
   }
+  if (diffs === null && view && view.card === "generic" && view.kind === "edit") {
+    diffs = syntheticDiff(args);
+  }
+  if (diffs === null) diffs = syntheticDiff(args);
   return { diffs, paths };
 }
 
@@ -74,8 +132,8 @@ function recordToolResult(exec, result) {
   if (WRITE_TOOLS.has(name) === false) return;
   const failed = !result || result === null || result.ok === false || result.error !== undefined;
   if (failed) return;
-  const { diffs, paths } = extractDiffData(result);
   const args = exec.arguments && typeof exec.arguments === "object" ? exec.arguments : {};
+  const { diffs, paths } = extractDiffData(result, args);
   const argPath = args.file_path ?? args.path;
   const allPaths = paths.length > 0 ? paths : typeof argPath === "string" ? [argPath] : [];
   if (allPaths.length === 0) return;
@@ -93,6 +151,7 @@ function recordToolResult(exec, result) {
     if (oldest) recent.delete(oldest.path);
     else break;
   }
+  scheduleSave(); // persist (debounced) so restarts keep the history
 }
 
 // ---- content preview ----
@@ -289,6 +348,7 @@ export function apply(ctx) {
       ctx.logger.warn(`[file-preview] record failed: ${err.message}`);
     }
   });
+  loadRecent().catch((err) => ctx.logger.warn(`[file-preview] load recent failed: ${err.message}`));
   ctx.effect(() => ctx.webServer.register({
     kind: "prefixes",
     path: "/preview",
