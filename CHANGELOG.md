@@ -3,6 +3,18 @@
 本项目版本历史。格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.0.5] - 2026-08-24
+
+### 新增
+
+- **侧边栏文件预览 + Diff 面板**（`plugins/dsh-file-preview/`）：
+  - 侧边栏底部新增 📁 按钮，点击打开文件预览面板
+  - 自动记录 Agent 写/改过的文件（监听工具结果，与官方 diff 卡片同源），
+    面板按时间列出，标注 +N/−M 修改行数
+  - 点击文件查看内容（文本 / 图片 / docx / pdf 自动提取）与 Diff 对比视图
+  - API：`/preview/files`、`/preview/content`、`/preview/diff`
+  - **exe 开箱即用**：与 dsh-upload 一起内置并自动安装
+
 ## [1.0.4] - 2026-08-20
 
 ### 新增

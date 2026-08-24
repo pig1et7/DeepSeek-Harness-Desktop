@@ -89,7 +89,40 @@ function findOnPath(exe) {
 function resolveNode() {
   if (config.nodeBin && fs.existsSync(config.nodeBin)) return config.nodeBin;
   const onPath = findOnPath("node");
-  return onPath || "node";
+  if (!onPath) return "node";
+  // dsh needs a fairly recent Node (zstd in node:zlib lands in v23); PATH can
+  // hold several installs (nvm shims, portable bundles), so prefer the one
+  // with the highest version instead of blindly taking the first hit.
+  const { spawnSync } = require("node:child_process");
+  const candidates = new Set([onPath]);
+  for (const dir of pathList()) {
+    for (const ext of ["", ".EXE"]) {
+      const full = path.join(dir, "node" + ext);
+      try {
+        fs.accessSync(full);
+        candidates.add(full);
+      } catch {
+        /* keep going */
+      }
+    }
+  }
+  let best = onPath;
+  let bestMajor = 0;
+  for (const cand of candidates) {
+    let major = 0;
+    try {
+      const r = spawnSync(cand, ["--version"], { timeout: 5000, encoding: "utf8" });
+      const m = /^v(\d+)/.exec((r.stdout || "").trim());
+      if (m) major = Number(m[1]);
+    } catch {
+      /* unreadable node — skip */
+    }
+    if (major > bestMajor) {
+      bestMajor = major;
+      best = cand;
+    }
+  }
+  return best;
 }
 
 /** npm cache dir candidates for the `_npx/<hash>/node_modules/...` layout. */
@@ -276,22 +309,31 @@ function dshHomeDir() {
  *   and links profile/node_modules/dsh-upload so the Loader can resolve it.
  * Idempotent: existing installs are left untouched.
  */
-function autoInstallUploadPlugin() {
+/**
+ * Auto-install one bundled plugin (dsh-upload / dsh-file-preview) into the DSH
+ * web profile, so an "open the box" user gets the features without scripts.
+ * - source: packaged resources/<name> (with deps) or repo plugins/<name>
+ * - copies to $DSH_HOME/plugins/<name>, appends the profile patch entry,
+ *   and links profile/node_modules/<name> so the Loader can resolve it.
+ * Idempotent: existing installs are left untouched.
+ */
+function autoInstallPlugin(name) {
   try {
     const home = dshHomeDir();
+    const entryId = name === "dsh-file-preview" ? "file-preview" : "upload";
     const pkgSrc = app.isPackaged
-      ? path.join(process.resourcesPath, "dsh-upload")
-      : path.join(__dirname, "plugins", "dsh-upload");
+      ? path.join(process.resourcesPath, name)
+      : path.join(__dirname, "plugins", name);
     if (!fs.existsSync(path.join(pkgSrc, "lib", "index.js"))) {
-      appendLog(`upload plugin bundle not found at ${pkgSrc} — skipping auto-install`);
+      appendLog(`plugin bundle not found at ${pkgSrc} — skipping auto-install`);
       return;
     }
 
-    const pluginDest = path.join(home, "plugins", "dsh-upload");
+    const pluginDest = path.join(home, "plugins", name);
     if (!fs.existsSync(path.join(pluginDest, "lib", "index.js"))) {
       fs.mkdirSync(path.dirname(pluginDest), { recursive: true });
       fs.cpSync(pkgSrc, pluginDest, { recursive: true, force: true });
-      appendLog(`bundle installed upload plugin -> ${pluginDest}`);
+      appendLog(`bundle installed plugin -> ${pluginDest}`);
     }
 
     const profileDir = path.join(home, "profiles", "web");
@@ -318,10 +360,10 @@ function autoInstallUploadPlugin() {
 
     const patch = path.join(profileDir, "cordis.patch.yml");
     const PATCH_HEADER = "# Your patch layer for this dsh profile, applied after every bundle layer.\n";
-    const UPLOAD_ENTRY = "- insert:\n    - id: upload\n      name: 'dsh-upload'\n";
+    const ENTRY = `- insert:\n    - id: ${entryId}\n      name: '${name}'\n`;
     if (!fs.existsSync(patch)) fs.writeFileSync(patch, PATCH_HEADER);
     const patchText = fs.readFileSync(patch, "utf8");
-    if (!patchText.includes("dsh-upload")) {
+    if (!patchText.includes(name)) {
       // dsh's empty template is flow-style `[]`, which cannot be merged with a
       // block `- insert:` entry. If the file only contains that empty list, we
       // rewrite it; otherwise we append the entry.
@@ -330,27 +372,24 @@ function autoInstallUploadPlugin() {
         .filter((l) => l.trim() !== "" && !l.trim().startsWith("#"))
         .join("\n")
         .trim();
-      if (bare === "[]") {
-        fs.writeFileSync(patch, PATCH_HEADER + UPLOAD_ENTRY);
-      } else {
-        fs.appendFileSync(patch, "\n" + UPLOAD_ENTRY);
-      }
-      appendLog("added dsh-upload entry to web profile patch");
+      if (bare === "[]") fs.writeFileSync(patch, PATCH_HEADER + ENTRY);
+      else fs.appendFileSync(patch, "\n" + ENTRY);
+      appendLog(`added ${name} entry to web profile patch`);
     }
 
     const nmDir = path.join(profileDir, "node_modules");
-    const nmLink = path.join(nmDir, "dsh-upload");
+    const nmLink = path.join(nmDir, name);
     if (!fs.existsSync(nmLink)) {
       fs.mkdirSync(nmDir, { recursive: true });
       try {
         fs.symlinkSync(pluginDest, nmLink, "junction");
         appendLog(`linked ${nmLink} -> ${pluginDest}`);
       } catch (err) {
-        appendLog(`could not link profile dsh-upload: ${err.message}`);
+        appendLog(`could not link profile ${name}: ${err.message}`);
       }
     }
   } catch (err) {
-    appendLog(`upload plugin auto-install skipped: ${err.message}`);
+    appendLog(`${name} auto-install skipped: ${err.message}`);
   }
 }
 
@@ -508,7 +547,8 @@ async function runServerAndLoad() {
   }
   try {
     if (smokePort) config.port = smokePort; // smoke-mode override
-    autoInstallUploadPlugin(); // ensure the bundled upload plugin is present before boot
+    autoInstallPlugin("dsh-upload"); // bundled upload plugin (📎)
+    autoInstallPlugin("dsh-file-preview"); // bundled sidebar file preview (📁)
     await ensureServer();
     if (win && !win.isDestroyed()) {
       await win.loadURL(serverUrl());

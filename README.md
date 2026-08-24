@@ -2,15 +2,15 @@
 
 把 DeepSeek Harness 的 Web GUI 变成 **Windows 桌面应用**：双击图标即用，无需在终端输入任何命令。
 
-> 当前版本 **1.0.4** · 更新日志见 [CHANGELOG.md](CHANGELOG.md)
+> 当前版本 **1.0.5** · 更新日志见 [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
 ## 🚀 快速开始
 
-1. 下载 **DeepSeek-Harness-Desktop-1.0.4-portable.exe**（[GitHub Releases](https://github.com/pig1et7/DeepSeek-Harness-Desktop/releases)，约 80MB，免安装）
+1. 下载 **DeepSeek-Harness-Desktop-1.0.5-portable.exe**（[GitHub Releases](https://github.com/pig1et7/DeepSeek-Harness-Desktop/releases)，约 90MB，免安装）
 2. 安装 [Node.js LTS](https://nodejs.org)（应用启动 dsh 服务需要）
-3. **双击 exe** → 自动启动服务并打开界面，**上传插件已内置，开箱即用** ✅
+3. **双击 exe** → 自动启动服务并打开界面，**上传插件与文件预览已内置，开箱即用** ✅
 
 > 首次运行会自动联网下载 dsh（约 1-3 分钟），之后秒开。
 > 想要桌面快捷方式？运行 `scripts\创建桌面快捷方式.cmd`。
@@ -21,6 +21,7 @@
 - 🔄 **智能端口**：已有 DSH 实例则复用，否则自动找空闲端口启动
 - 🧹 **干净退出**：关闭窗口即退出并停止自己启动的服务（不会误杀复用的）
 - 📎 **文件上传**：内置上传插件，图片 / Word / PDF / 文本都能传，Agent 自动读取
+- 📁 **文件预览 + Diff**（1.0.5 新增）：侧边栏查看 Agent 写/改过的文件，内容预览与改动对比一目了然
 - 📄 **出错可查**：启动失败显示错误页 + 日志 + 一键重试
 
 ## 📎 文件上传（已内置，开箱即用）
@@ -33,6 +34,15 @@ exe 已包含上传插件，首次双击启动时会**自动安装**到 DSH 配�
 
 > 如果给已有的 DSH 服务（非本应用启动）安装插件，运行
 > `scripts\install-upload-plugin.ps1` 即可。
+
+## 📁 文件预览与 Diff（已内置，开箱即用）
+
+侧边栏底部的 **📁** 按钮打开「文件预览」面板：
+
+- **自动记录** Agent 写/改过的文件（带 +N/−M 修改统计），按时间排序
+- 点击文件 → 查看**内容预览**（文本代码 / 图片 / docx / pdf 自动提取）
+- 有修改的文件可切换到 **Diff 视图**，红绿高亮对比改动
+- 面板每 4 秒自动刷新，Agent 改完文件立刻可见
 
 ## 🛠️ 在新主机上完整部署（桌面应用 + 插件，一键）
 
